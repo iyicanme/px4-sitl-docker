@@ -1,73 +1,50 @@
 
-PX4 Software In-the-Loop Simulator
-==================================
+# PX4 SitL in Docker
 
-The purpose is to have a docker-isolated PX4 SITL via gazebo.
+The aim is to be able to run ArduPilot SITL simulator on Docker so it is possible to develop UAV agent programs without hardware.
 
-
-DockerHub
----------
-
-To run from the DockerHub image:
+## Run image
+Clone git repository https://github.com/iyicanme/px4-sitl-docker
 
 ```
-docker run --rm -it -p5760:5760 radarku/px4-sitl
+git clone https://github.com/iyicanme/px4-sitl-docker.git
 ```
 
-...which starts a MAVLink TCP socket listening at port 5760
-
-Settings
---------
-```
---env PX4_HOME_LAT   42.3898
---env PX4_HOME_LON   -71.1476
---env PX4_HOME_ALT   14.2
-```
-
-Usage
------
-
-You should get an interactive PX4 shell, which you can use:
-```
-pxh> commander takeoff
-```
-
-Alternatively you can connect to the MAVLink stream:
-```
-mavproxy.py --master=tcp:127.0.0.1:5760
-```
-
-If you start getting this RC FAILSAFE:
-```
-INFO  [commander] Takeoff detected
-WARN  [commander] Failsafe enabled: no datalink
-INFO  [navigator] RTL HOME activated
-INFO  [navigator] RTL: climb to 25 m (11 m above home)
-INFO  [navigator] RTL: return at 25 m (11 m above home)
-INFO  [navigator] RTL: land at home
-```
-
-Go into your GCS and update the parameter `NAV_RCL_ACT` (Set RC loss failsafe mode) to `0` (Disabled) as explained here:
-
-https://docs.px4.io/en/advanced_config/parameter_reference.html#NAV_RCL_ACT
-
-
-
-Building and Running Manually
------------------------------
-
-To build:
+Build and the image
 
 ```
-docker build --rm --tag px4-sitl .
+./run.sh
 ```
 
-To run:
+## Connecting to SITL
+
+Creating a Mavlink connection to host port 55760 TCP port will cause the SITL to start sending constant UAV updates, such as position, battery level, memory information, mission, etc.
+
+Easiest way to create a Mavlink connection is through MavProxy.
+
+MavProxy is available through PyPI, it can be installed as follows.
+
+Create a Python virtual environment
 
 ```
-docker run --rm -it -p5760:5760 px4-sitl
+python3 -m virtualenv venv
 ```
 
-...which starts a MAVLink TCP socket listening at port 5760
+This creates a virtual environment in the folder `venv`.
 
+This assumes Python package `virtualenv` is installed.
 
+Install `mavproxy` package
+
+```
+venv/bin/pip install mavproxy
+```
+
+Run `mavproxy` connection to the SITL instance listening on TCP port 55760
+
+```
+venv/bin/mavproxy.py --master=tcp:127.0.0.1:55760
+```
+
+Mavproxy can complain about ModemManager possibly interfering with MavProxy.
+It can be beneficial to remove the package if an LTE connection is not being made use of. 
